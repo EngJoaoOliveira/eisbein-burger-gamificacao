@@ -218,17 +218,28 @@ body {
   margin-bottom: 10px;
 }
 .status-bar {
-  background-color: var(--cor-barra-status);
-  height: 8px;
-  border-radius: 4px;
+  width: 100%;
+  height: 10px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
   overflow: hidden;
   margin: 10px 0;
 }
+
 .points-bar {
-  background-color: var(--cor-barra-pontos);
-  height: 8px;
-  transition: width 0.5s;
+  height: 100%;
+  background-color: var(--cor-destaque);
 }
+
+.level-description {
+  font-size: 12px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 5px;
+  text-align: center;
+  padding: 0 10px;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

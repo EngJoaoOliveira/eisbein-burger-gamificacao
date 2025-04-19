@@ -30,14 +30,8 @@
         <h3>{{ usuario.name }}</h3>
         <p>Pontos: {{ usuario.pontos || 0 }}</p>
         <div class="status-bar">
-          <div class="points-bar" style="width: {{ (usuario.pontos || 0) / 50 }}%;"></div>
+          <div class="points-bar" style="width: {{ usuario.percentCompleted || 0 }}%;"></div>
         </div>
-        <p>{{ usuario.nivel || 'Iniciante' }}</p>
-      </div>
-      <div class="menu">
-        <div class="menu-icon" ng-click="redirecionar('desafios')">🏆<br>Desafios</div>
-        <div class="menu-icon" ng-click="redirecionar('ranking')">🥇<br>Ranking</div>
-        <div class="menu-icon" ng-click="redirecionar('recompensas')">🎁<br>Prêmios</div>
       </div>
     </section>
 
@@ -92,31 +86,55 @@
     $scope.carregarUsuario = function() {
       if (!$scope.verificarAutenticacao()) return;
       
-      var usuarioSalvo = localStorage.getItem('usuario');
-      if (usuarioSalvo) {
-        $scope.usuario = JSON.parse(usuarioSalvo);
-      }
-      
-      // Atualizar dados do jogador da API usando o token
-      var userId = localStorage.getItem('user_id');
       var token = localStorage.getItem('access_token');
+      var userId = localStorage.getItem('user_id');
       
+      // Buscar dados do status do usuário na API
       var req = {
         method: 'GET',
-        url: 'https://service2.funifier.com/v3/player/' + userId,
+        url: 'https://service2.funifier.com/v3/player/' + userId + '/status',
         headers: {
-          "Authorization": "Basic NjgwMmYwZjYyMzI3Zjc0ZjNhMzYyN2YzOjY4MDNjZDhhMjMyN2Y3NGYzYTM2MzcyZA=="
+          "Authorization": "Bearer " + token,
+          "Content-Type": "application/json"
         }
       };
       
+      $scope.carregando = true;
+      
       $http(req).then(
         function success(response) {
-          console.log('Dados do jogador atualizados:', response.data);
-          $scope.usuario = response.data;
-          localStorage.setItem('usuario', JSON.stringify(response.data));
+          console.log('Dados do status do usuário:', response.data);
+          
+          // Atualizar dados do usuário com os dados retornados da API
+          $scope.usuario = {
+            name: response.data.name,
+            image: response.data.image.medium.url,
+            pontos: response.data.total_points || response.data.extra.pontos || 0,
+            nivel: response.data.level_progress?.next_level?.level || response.data.extra.nivel || 'Iniciante',
+            moedas: response.data.extra.moedas || 0,
+            telefone: response.data.extra.telefone || '',
+            // Dados de progresso do nível
+            percentCompleted: response.data.level_progress?.percent_completed || 0,
+            nextPoints: response.data.level_progress?.next_points || 10,
+            levelDescription: response.data.level_progress?.next_level?.description || '',
+            levelPosition: response.data.level_progress?.next_level?.position || 0,
+            levelMinPoints: response.data.level_progress?.next_level?.minPoints || 10,
+            levelImage: response.data.level_progress?.next_level?.image?.small?.url || ''
+          };
+          
+          // Salvar dados atualizados no localStorage
+          localStorage.setItem('usuario', JSON.stringify($scope.usuario));
+          $scope.carregando = false;
         },
         function error(response) {
-          console.log('Erro ao atualizar dados do jogador:', response);
+          console.log('Erro ao buscar dados do status do usuário:', response);
+          
+          // Em caso de erro, tentar usar dados salvos localmente
+          var usuarioSalvo = localStorage.getItem('usuario');
+          if (usuarioSalvo) {
+            $scope.usuario = JSON.parse(usuarioSalvo);
+          }
+          $scope.carregando = false;
         }
       );
     };
