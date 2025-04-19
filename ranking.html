@@ -14,7 +14,7 @@
 
 <body ng-controller="BurgerController">
 
-  <div class="container" ng-class="{ 'fade': transitioning }">
+  <div class="container no-background" ng-class="{ 'fade': transitioning }">
 
     <!-- Header com botão de voltar -->
     <div class="page-header">
@@ -24,11 +24,29 @@
     </div>
 
     <!-- Tela Ranking -->
-    <section>
-      <div class="ranking-item" ng-repeat="player in ranking">
-        <div>{{player.nome}}</div>
-        <div>{{player.pontos}}</div>
+    <section class="ranking-section">
+      <div class="loading" ng-if="carregando">
+        <p>Carregando ranking...</p>
       </div>
+      
+      <div class="ranking-list">
+        <div class="ranking-item" ng-repeat="player in ranking">
+          <div class="player-avatar">
+            <img ng-src="{{player.image || 'https://cdn-icons-png.flaticon.com/512/1077/1077114.png'}}" alt="{{player.name}}">
+          </div>
+          <div class="player-info">
+            <div class="player-name">{{player.name}}</div>
+          </div>
+          <div class="player-points">{{player.total}} XP</div>
+        </div>
+      </div>
+      
+      <div class="empty-state" ng-if="ranking.length === 0 && !carregando">
+        <p>Nenhum jogador no ranking ainda.</p>
+      </div>
+      
+      <!-- Espaçador para evitar sobreposição com o bottom app bar -->
+      <div class="bottom-spacer"></div>
     </section>
 
     <!-- Bottom App Bar -->
@@ -91,12 +109,48 @@
     // Inicializar carregando o usuário
     $scope.carregarUsuario();
 
-    // Dados do ranking
-    $scope.ranking = [
-      { nome: "Lucas", pontos: 3200 },
-      { nome: "Amanda", pontos: 2800 },
-      { nome: "Guilherme", pontos: 2500 }
-    ];
+    // Carregar ranking
+    $scope.carregando = true;
+    $scope.ranking = [];
+    
+    $scope.carregarRanking = function() {
+      if (!$scope.verificarAutenticacao()) return;
+      
+      var token = localStorage.getItem('access_token');
+      var req = {
+        method: 'POST',
+        url: 'https://service2.funifier.com/v3/leaderboard/ESZrdDv/leader/aggregate?period=&live=true',
+        headers: {
+          "Authorization": "Basic NjgwMmYwZjYyMzI3Zjc0ZjNhMzYyN2YzOjY4MDNjZDhhMjMyN2Y3NGYzYTM2MzcyZA==",
+          "Content-Type": "application/json"
+        },
+        data: []
+      };
+      
+      $http(req).then(
+        function (response) {
+          console.log(response.data);
+          $scope.ranking = response.data;
+          $scope.carregando = false;
+        },
+        function (err) {
+          console.log(err);
+          $scope.carregando = false;
+        }
+      );
+    };
+    
+    // Inicializar carregando o ranking
+    $scope.carregarRanking();
+    
+    // Função para redirecionar para outras páginas
+    $scope.redirecionar = function(pagina) {
+      if (pagina === 'login') {
+        window.location.href = 'index.html';
+      } else {
+        window.location.href = pagina + '.html';
+      }
+    };
     
     // Função para voltar para a página anterior
     $scope.voltarPagina = function() {
