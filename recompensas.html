@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Eisbein Burger | Status</title>
+  <title>Eisbein Burger | Recompensas</title>
 
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular.min.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular-animate.js"></script>
@@ -19,25 +19,22 @@
     <!-- Header com botão de voltar -->
     <div class="page-header">
       <button class="back-button" ng-click="voltarPagina()">&#8592;</button>
-      <h1 class="page-title">Status</h1>
+      <h1 class="page-title">Recompensas</h1>
       <div style="width: 24px;"></div> <!-- Espaçador para centralizar o título -->
     </div>
 
-    <!-- Tela Status -->
+    <!-- Tela Recompensas -->
     <section>
-      <div class="logo">
-        <img ng-src="{{usuario.image.small.url || 'https://i.pravatar.cc/100'}}" class="avatar">
-        <h3>{{ usuario.name }}</h3>
-        <p>Pontos: {{ usuario.pontos || 0 }}</p>
-        <div class="status-bar">
-          <div class="points-bar" style="width: {{ (usuario.pontos || 0) / 50 }}%;"></div>
-        </div>
-        <p>{{ usuario.nivel || 'Iniciante' }}</p>
+      <div class="rewards-header">
+        <h2>Prêmios</h2>
+        <div>Moedas: {{ usuario.moedas || 0 }}</div>
       </div>
-      <div class="menu">
-        <div class="menu-icon" ng-click="redirecionar('desafios')">🏆<br>Desafios</div>
-        <div class="menu-icon" ng-click="redirecionar('ranking')">🥇<br>Ranking</div>
-        <div class="menu-icon" ng-click="redirecionar('recompensas')">🎁<br>Prêmios</div>
+      <div class="card" ng-repeat="premio in premios">
+        <img ng-src="{{premio.icone}}">
+        <div>
+          <strong>{{premio.nome}}</strong><br>Custa: {{premio.custo}} moedas
+        </div>
+        <button class="btn" ng-click="comprar(premio)">Comprar</button>
       </div>
     </section>
 
@@ -74,7 +71,7 @@
 
     $scope.transitioning = false;
     $scope.usuario = {};
-
+    
     // Verificar se o usuário está autenticado
     $scope.verificarAutenticacao = function() {
       var token = localStorage.getItem('access_token');
@@ -82,7 +79,7 @@
       
       if (!token || !userId) {
         // Se não houver token ou ID do usuário, redirecionar para login
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
         return false;
       }
       return true;
@@ -96,58 +93,42 @@
       if (usuarioSalvo) {
         $scope.usuario = JSON.parse(usuarioSalvo);
       }
-      
-      // Atualizar dados do jogador da API usando o token
-      var userId = localStorage.getItem('user_id');
-      var token = localStorage.getItem('access_token');
-      
-      var req = {
-        method: 'GET',
-        url: 'https://service2.funifier.com/v3/player/' + userId,
-        headers: {
-          "Authorization": "Basic NjgwMmYwZjYyMzI3Zjc0ZjNhMzYyN2YzOjY4MDNjZDhhMjMyN2Y3NGYzYTM2MzcyZA=="
-        }
-      };
-      
-      $http(req).then(
-        function success(response) {
-          console.log('Dados do jogador atualizados:', response.data);
-          $scope.usuario = response.data;
-          localStorage.setItem('usuario', JSON.stringify(response.data));
-        },
-        function error(response) {
-          console.log('Erro ao atualizar dados do jogador:', response);
-        }
-      );
     };
 
     // Inicializar carregando o usuário
     $scope.carregarUsuario();
 
-    // Função para redirecionar para outras páginas
-    $scope.redirecionar = function(pagina) {
-      if (pagina === 'login') {
-        window.location.href = 'index.html';
-      } else {
-        window.location.href = pagina + '.html';
-      }
-    };
+    // Prêmios disponíveis
+    $scope.premios = [
+      { nome: "Sorvete Grátis", custo: 80, icone: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png" },
+      { nome: "Chaveiro Burger", custo: 130, icone: "https://cdn-icons-png.flaticon.com/512/1047/1047712.png" },
+      { nome: "Bebida Gelada", custo: 120, icone: "https://cdn-icons-png.flaticon.com/512/1046/1046857.png" }
+    ];
     
     // Função para voltar para a página anterior
     $scope.voltarPagina = function() {
-      // Na página de status, volta para a página de login
-      window.location.href = 'index.html';
+      window.location.href = 'status.html';
     };
-
-    // Função para fazer logout
-    $scope.logout = function() {
-      // Remover todos os dados de autenticação
-      localStorage.removeItem('usuario');
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('token_type');
-      localStorage.removeItem('user_id');
+    
+    // Função para comprar um prêmio
+    $scope.comprar = function(premio) {
+      // Verificar se o usuário tem moedas suficientes
+      if (!$scope.usuario.moedas || $scope.usuario.moedas < premio.custo) {
+        alert('Você não tem moedas suficientes para comprar este prêmio!');
+        return;
+      }
       
-      window.location.href = 'login.html';
+      // Simulação de compra
+      $scope.usuario.moedas -= premio.custo;
+      
+      // Atualizar dados do usuário no localStorage
+      localStorage.setItem('usuario', JSON.stringify($scope.usuario));
+      
+      // Exibir mensagem de sucesso
+      alert('Parabéns! Você comprou "' + premio.nome + '"!');
+      
+      // Em um ambiente real, aqui seria feita uma chamada à API para registrar a compra
+      // e atualizar as moedas do usuário
     };
 
   });
