@@ -25,11 +25,20 @@
 
     <!-- Tela Desafios -->
     <section>
-      <div class="card" ng-repeat="desafio in desafios" ng-click="completarDesafio(desafio)">
-        <img ng-src="{{desafio.icone}}">
-        <div>
-          <strong>{{desafio.nome}}</strong><br>+{{desafio.pontos}} pontos
+      <div class="loading" ng-if="carregando">
+        <p>Carregando desafios...</p>
+      </div>
+      <div class="card challenge-card" ng-repeat="desafio in desafios" ng-click="verDetalhesDesafio(desafio)">
+        <img ng-src="{{desafio.badgeUrl || 'https://cdn-icons-png.flaticon.com/512/1046/1046784.png'}}" class="challenge-icon">
+        <div class="challenge-info">
+          <h3 class="challenge-title">{{desafio.challenge}}</h3>
         </div>
+        <div class="challenge-points" ng-if="desafio.points && desafio.points.length > 0">
+          +{{desafio.points[0].total}} {{desafio.points[0].category}}
+        </div>
+      </div>
+      <div class="empty-state" ng-if="desafios.length === 0 && !carregando">
+        <p>Nenhum desafio disponível no momento.</p>
       </div>
     </section>
 
@@ -93,25 +102,68 @@
     // Inicializar carregando o usuário
     $scope.carregarUsuario();
 
-    // Desafios disponíveis
-    $scope.desafios = [
-      { nome: "Comprar Hambúrguer", pontos: 200, icone: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png" },
-      { nome: "Convidar Amigos", pontos: 100, icone: "https://cdn-icons-png.flaticon.com/512/1946/1946429.png" },
-      { nome: "Compartilhar no Instagram", pontos: 150, icone: "https://cdn-icons-png.flaticon.com/512/1384/1384005.png" }
-    ];
+    // Carregar desafios da API
+    $scope.carregarDesafios = function() {
+      if (!$scope.verificarAutenticacao()) return;
+      
+      var token = localStorage.getItem('access_token');
+      
+      $scope.carregando = true;
+      
+      var req = {
+        method: 'GET',
+        url: 'https://service2.funifier.com/v3/challenge',
+        headers: {
+          "Authorization": "Basic NjgwMmYwZjYyMzI3Zjc0ZjNhMzYyN2YzOjY4MDNjZDhhMjMyN2Y3NGYzYTM2MzcyZA==",
+          "Content-Type": "application/json"
+        }
+      };
+      
+      $http(req).then(
+        function success(response) {
+          console.log('Desafios carregados:', response.data);
+          $scope.desafios = response.data;
+          $scope.carregando = false;
+        },
+        function error(response) {
+          console.log('Erro ao carregar desafios:', response);
+          $scope.desafios = [];
+          $scope.carregando = false;
+        }
+      );
+    };
+    
+    // Inicializar carregando os desafios
+    $scope.carregarDesafios();
     
     // Função para voltar para a página anterior
     $scope.voltarPagina = function() {
       window.location.href = 'status.html';
     };
     
-    // Função para completar um desafio
-    $scope.completarDesafio = function(desafio) {
-      // Simulação de completar desafio
-      alert('Parabéns! Você completou o desafio "' + desafio.nome + '" e ganhou ' + desafio.pontos + ' pontos!');
+    // Função para ver detalhes do desafio
+    $scope.verDetalhesDesafio = function(desafio) {
+      // Exibir detalhes do desafio em um modal ou alerta
+      var recompensas = '';
+      if (desafio.points && desafio.points.length > 0) {
+        desafio.points.forEach(function(point) {
+          recompensas += '\n- ' + point.total + ' ' + point.category;
+        });
+      }
       
-      // Em um ambiente real, aqui seria feita uma chamada à API para registrar o desafio completado
-      // e atualizar os pontos do usuário
+      var requisitos = '';
+      if (desafio.requirements && desafio.requirements.length > 0) {
+        desafio.requirements.forEach(function(req) {
+          requisitos += '\n- ' + req.total + ' ' + req.item;
+        });
+      }
+      
+      var mensagem = 'Desafio: ' + desafio.challenge + 
+                    '\n\nDescrição: ' + desafio.description + 
+                    '\n\nRecompensas: ' + (recompensas || 'Nenhuma') + 
+                    '\n\nRequisitos: ' + (requisitos || 'Nenhum');
+      
+      alert(mensagem);
     };
 
   });

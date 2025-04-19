@@ -240,6 +240,66 @@ body {
   padding: 0 10px;
 }
 
+/* Estilos para a página de desafios */
+.challenge-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  padding: 15px;
+  border-radius: 10px;
+  background-color: #FDF9E0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.challenge-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.challenge-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 15px;
+}
+
+.challenge-info {
+  flex: 1;
+  margin-right: 10px;
+}
+
+.challenge-title {
+  margin: 0 0 5px 0;
+  color: #d32f2f;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.challenge-points {
+  color: #d32f2f;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: var(--cor-texto);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 30px;
+  color: var(--cor-texto);
+  font-style: italic;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
