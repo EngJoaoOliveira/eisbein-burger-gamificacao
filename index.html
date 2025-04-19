@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-BR" ng-app="burgerApp">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eisbein Burger - Gamificação</title>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular-animate.js"></script>
+
+  <style>
+    /* Estilo geral */
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #d32f2f;
+      margin: 0;
+      padding: 0;
+      color: #fff;
+    }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      padding: 20px;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .logo-img {
+      width: 80px;
+      margin-bottom: 10px;
+    }
+    .form-group input {
+      width: 100%;
+      margin: 10px 0;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+    }
+    .form-group label {
+      font-size: 14px;
+      display: block;
+      margin: 8px 0;
+    }
+    .btn {
+      width: 100%;
+      background-color: #ffca28;
+      color: #000;
+      font-weight: bold;
+      padding: 14px;
+      border-radius: 10px;
+      margin-top: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      transition: background 0.3s;
+    }
+    .btn:hover {
+      background-color: #ffc107;
+    }
+    .switch-link {
+      text-align: center;
+      margin-top: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: underline;
+    }
+    .menu {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+    .menu-icon {
+      text-align: center;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .card {
+      background: #fff;
+      color: #000;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card img {
+      width: 50px;
+      height: 50px;
+      margin-right: 10px;
+    }
+    .ranking-item {
+      background: #fff;
+      color: #000;
+      padding: 10px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .rewards-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .avatar {
+      width: 100px;
+      border-radius: 50%;
+      margin-bottom: 10px;
+    }
+    .status-bar {
+      background-color: #ffc107;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    .points-bar {
+      background-color: #4caf50;
+      height: 8px;
+      transition: width 0.5s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+
+</head>
+
+<body ng-controller="BurgerController">
+
+  <div class="container" ng-class="{ 'fade': transitioning }">
+
+    <!-- Tela Cadastro (inicial) -->
+    <section ng-show="telaAtual == 'cadastro'">
+      <div class="logo">
+        <img src="img/logo.png" alt="Eisbein Burger Logo" class="logo-img">
+        <h2>Cadastro</h2>
+      </div>
+      <div class="form-group">
+        <input type="text" placeholder="Nome" ng-model="novoUsuario.nome">
+        <input type="text" placeholder="CPF" ng-model="novoUsuario.cpf">
+        <input type="text" placeholder="Telefone" ng-model="novoUsuario.telefone">
+        <input type="email" placeholder="E-mail" ng-model="novoUsuario.email">
+        <input type="password" placeholder="Senha" ng-model="novoUsuario.senha">
+        <label><input type="checkbox" ng-model="aceitouTermos"> Aceito os termos de uso</label>
+      </div>
+      <button class="btn" ng-click="cadastrar()">Cadastrar</button>
+      <p class="switch-link" ng-click="abrir('login')">Já tem conta? Faça login</p>
+    </section>
+
+    <!-- Tela Login -->
+    <section ng-show="telaAtual == 'login'">
+      <div class="logo">
+        <img src="img/logo.png" alt="Eisbein Burger Logo" class="logo-img">
+        <h2>Login</h2>
+      </div>
+      <div class="form-group">
+        <input type="text" placeholder="CPF" ng-model="login.cpf">
+        <input type="password" placeholder="Senha" ng-model="login.senha">
+      </div>
+      <button class="btn" ng-click="entrar()">Entrar</button>
+      <p class="switch-link" ng-click="abrir('cadastro')">Não tem conta? Cadastre-se</p>
+    </section>
+
+    <!-- Tela Status -->
+    <section ng-show="telaAtual == 'status'">
+      <div class="logo">
+        <img src="https://i.pravatar.cc/100" class="avatar">
+        <h3>{{ usuario.nome }}</h3>
+        <p>Pontos: {{ usuario.pontos }}</p>
+        <div class="status-bar">
+          <div class="points-bar" style="width: {{ usuario.pontos / 50 }}%;"></div>
+        </div>
+        <p>{{ usuario.nivel }}</p>
+      </div>
+      <div class="menu">
+        <div class="menu-icon" ng-click="abrir('desafios')">🏆<br>Desafios</div>
+        <div class="menu-icon" ng-click="abrir('ranking')">🥇<br>Ranking</div>
+        <div class="menu-icon" ng-click="abrir('recompensas')">🎁<br>Prêmios</div>
+      </div>
+    </section>
+
+    <!-- Tela Desafios -->
+    <section ng-show="telaAtual == 'desafios'">
+      <h2>Desafios</h2>
+      <div class="card" ng-repeat="desafio in desafios" ng-click="completarDesafio(desafio)">
+        <img ng-src="{{desafio.icone}}">
+        <div>
+          <strong>{{desafio.nome}}</strong><br>+{{desafio.pontos}} pontos
+        </div>
+      </div>
+      <button class="btn" ng-click="abrir('status')">Voltar</button>
+    </section>
+
+    <!-- Tela Ranking -->
+    <section ng-show="telaAtual == 'ranking'">
+      <h2>Ranking</h2>
+      <div class="ranking-item" ng-repeat="player in ranking">
+        <div>{{player.nome}}</div>
+        <div>{{player.pontos}}</div>
+      </div>
+      <button class="btn" ng-click="abrir('status')">Voltar</button>
+    </section>
+
+    <!-- Tela Recompensas -->
+    <section ng-show="telaAtual == 'recompensas'">
+      <div class="rewards-header">
+        <h2>Recompensas</h2>
+        <div>Moedas: {{ usuario.moedas }}</div>
+      </div>
+      <div class="card" ng-repeat="premio in premios">
+        <img ng-src="{{premio.icone}}">
+        <div>
+          <strong>{{premio.nome}}</strong><br>Custa: {{premio.custo}} moedas
+        </div>
+        <button class="btn" ng-click="comprar(premio)">Comprar</button>
+      </div>
+      <button class="btn" ng-click="abrir('status')">Voltar</button>
+    </section>
+
+  </div>
+
+<script>
+  angular.module('burgerApp', ['ngAnimate'])
+  .controller('BurgerController', function($scope, $timeout, $http) {
+
+    $scope.telaAtual = 'cadastro'; // Começar no cadastro
+    $scope.transitioning = false;
+    $scope.usuarios = []; // Simulando banco de usuários
+
+    $scope.novoUsuario = {};
+    $scope.login = {};
+
+    $scope.usuario = {}; // Usuário logado
+
+    $scope.desafios = [
+      { nome: "Comprar Hambúrguer", pontos: 200, icone: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png" },
+      { nome: "Convidar Amigos", pontos: 100, icone: "https://cdn-icons-png.flaticon.com/512/1946/1946429.png" },
+      { nome: "Compartilhar no Instagram", pontos: 150, icone: "https://cdn-icons-png.flaticon.com/512/1384/1384005.png" }
+    ];
+
+    $scope.ranking = [
+      { nome: "Lucas", pontos: 3200 },
+      { nome: "Amanda", pontos: 2800 },
+      { nome: "Guilherme", pontos: 2500 }
+    ];
+
+    $scope.premios = [
+      { nome: "Sorvete Grátis", custo: 80, icone: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png" },
+      { nome: "Chaveiro Burger", custo: 130, icone: "https://cdn-icons-png.flaticon.com/512/1047/1047712.png" },
+      { nome: "Bebida Gelada", custo: 120, icone: "https://cdn-icons-png.flaticon.com/512/1046/1046857.png" }
+    ];
+
+    $scope.abrir = function(tela) {
+      $scope.transitioning = true;
+      $timeout(() => {
+        $scope.telaAtual = tela;
+        $scope.transitioning = false;
+      }, 300);
+    };
+
+    $scope.cadastrar = function() {
+      if ($scope.aceitouTermos) {
+        $scope.novoUsuario.moedas = 500;
+        $scope.novoUsuario.pontos = 0;
+        $scope.novoUsuario.nivel = "Iniciante";
+        $scope.usuarios.push($scope.novoUsuario);
+        $scope.login.cpf = $scope.novoUsuario.cpf;
+        $scope.login.senha = $scope.novoUsuario.senha;
+        
+        // Integração com a API Funifier
+        var req = {
+          method: 'POST',
+          url: 'https://service2.funifier.com/v3/player',
+          headers: {"Authorization":"Basic NjgwMmYwZjYyMzI3Zjc0ZjNhMzYyN2YzOjY4MDNjZDhhMjMyN2Y3NGYzYTM2MzcyZA==","Content-Type":"application/json"},
+          data: {
+            "_id": $scope.novoUsuario.cpf,
+            "name": $scope.novoUsuario.nome,
+            "email": $scope.novoUsuario.email,
+            "image": {
+              "small": {"url": "https://i.pravatar.cc/100"},
+              "medium": {"url": "https://i.pravatar.cc/100"},
+              "original": {"url": "https://i.pravatar.cc/100"}
+            },
+            "teams": ["eisbein-burger"],
+            "extra": {
+              "telefone": $scope.novoUsuario.telefone,
+              "moedas": $scope.novoUsuario.moedas,
+              "pontos": $scope.novoUsuario.pontos,
+              "nivel": $scope.novoUsuario.nivel
+            }
+          }
+        };
+        
+        $http(req).then(
+          function (response) {
+            console.log('Funifier API response:', response.data);
+            $scope.entrar();
+          },
+          function (err) {
+            console.log('Funifier API error:', err);
+            alert('Erro ao registrar na plataforma de gamificação. Tente novamente.');
+            $scope.entrar(); // Continua mesmo com erro na API
+          }
+        );
+      } else {
+        alert("Você precisa aceitar os termos.");
+      }
+    };
+
+    $scope.entrar = function() {
+      const user = $scope.usuarios.find(u => u.cpf === $scope.login.cpf && u.senha === $scope.login.senha);
+      if (user) {
+        $scope.usuario = user;
+        
+        // Buscar dados do jogador na API Funifier
+        var req = {
+          method: 'GET',
+          url: 'https://service2.funifier.com/v3/player/' + user.cpf,
+          headers: {"Authorization":"Basic NjgwMmYwZjYyMzI3Zjc0ZjNhMzYyN2YzOjY4MDNjZDhhMjMyN2Y3NGYzYTM2MzcyZA=="}
+        };
+        
+        $http(req).then(
+          function (response) {
+            console.log('Funifier player data:', response.data);
+            // Atualizar dados do usuário com informações da API se disponíveis
+            if (response.data && response.data.extra) {
+              if (response.data.extra.pontos) $scope.usuario.pontos = response.data.extra.pontos;
+              if (response.data.extra.moedas) $scope.usuario.moedas = response.data.extra.moedas;
+              if (response.data.extra.nivel) $scope.usuario.nivel = response.data.extra.nivel;
+            }
+            $scope.abrir('status');
+          },
+          function (err) {
+            console.log('Erro ao buscar dados do jogador:', err);
+            $scope.abrir('status'); // Continua mesmo com erro na API
+          }
+        );
+      } else {
+        alert("CPF ou Senha inválidos!");
+      }
+    };
+
+    $scope.completarDesafio = function(desafio) {
+      $scope.usuario.pontos += desafio.pontos;
+      $scope.usuario.moedas += desafio.pontos / 2;
+      
+      // Atualizar dados do jogador na API Funifier
+      var req = {
+        method: 'PUT',
+        url: 'https://service2.funifier.com/v3/player/' + $scope.usuario.cpf,
+        headers: {"Authorization":"Basic NjgwMmYwZjYyMzI3Zjc0ZjNhMzYyN2YzOjY4MDNjZDhhMjMyN2Y3NGYzYTM2MzcyZA==","Content-Type":"application/json"},
+        data: {
+          "extra": {
+            "pontos": $scope.usuario.pontos,
+            "moedas": $scope.usuario.moedas,
+            "nivel": $scope.usuario.nivel
+          }
+        }
+      };
+      
+      $http(req).then(
+        function (response) {
+          console.log('Desafio atualizado na API:', response.data);
+          alert("Desafio concluído: " + desafio.nome + "!");
+        },
+        function (err) {
+          console.log('Erro ao atualizar desafio na API:', err);
+          alert("Desafio concluído: " + desafio.nome + "!");
+        }
+      );
+    };
+
+    $scope.comprar = function(premio) {
+      if ($scope.usuario.moedas >= premio.custo) {
+        $scope.usuario.moedas -= premio.custo;
+        
+        // Atualizar moedas do jogador na API Funifier
+        var req = {
+          method: 'PUT',
+          url: 'https://service2.funifier.com/v3/player/' + $scope.usuario.cpf,
+          headers: {"Authorization":"Basic NjgwMmYwZjYyMzI3Zjc0ZjNhMzYyN2YzOjY4MDNjZDhhMjMyN2Y3NGYzYTM2MzcyZA==","Content-Type":"application/json"},
+          data: {
+            "extra": {
+              "moedas": $scope.usuario.moedas
+            }
+          }
+        };
+        
+        $http(req).then(
+          function (response) {
+            console.log('Compra atualizada na API:', response.data);
+            alert("Parabéns! Você ganhou: " + premio.nome);
+          },
+          function (err) {
+            console.log('Erro ao atualizar compra na API:', err);
+            alert("Parabéns! Você ganhou: " + premio.nome);
+          }
+        );
+      } else {
+        alert("Você não tem moedas suficientes.");
+      }
+    };
+
+  });
+</script>
+
+</body>
+</html>
