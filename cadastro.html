@@ -102,17 +102,13 @@
           console.log('XHR Response Text:', xhr.responseText);
           
           if (xhr.status >= 200 && xhr.status < 300) {
-            // Sucesso
+            // Cadastro realizado com sucesso, agora vamos definir a senha
             console.log('Cadastro realizado com sucesso!');
             var responseData = JSON.parse(xhr.responseText);
             console.log('Dados retornados da API:', responseData);
             
-            // Atualizar a UI
-            $scope.$apply(function() {
-              alert('Cadastro realizado com sucesso! Faça login para continuar.');
-              window.location.href = 'index.html'; // Redirecionar para a página de login
-              $scope.cadastrando = false;
-            });
+            // Chamar o endpoint para definir a senha
+            definirSenha($scope.novoUsuario.cpf, $scope.novoUsuario.senha);
           } else {
             // Erro
             console.log('Erro na requisição:', xhr.status);
@@ -146,6 +142,71 @@
         var jsonData = JSON.stringify(playerData);
         console.log('Dados JSON a serem enviados:', jsonData);
         xhr.send(jsonData);
+        
+        // Função para definir a senha do usuário
+        function definirSenha(cpf, senha) {
+          console.log('Definindo senha para o usuário:', cpf);
+          
+          var passwordXhr = new XMLHttpRequest();
+          var passwordUrl = 'https://service2.funifier.com/v3/player/password?player=' + cpf + '&new_password=' + senha + '&code=y6z3D6H';
+          
+          passwordXhr.open('PUT', passwordUrl, true);
+          passwordXhr.setRequestHeader('Authorization', 'Basic NjgwMmYwZjYyMzI3Zjc0ZjNhMzYyN2YzOjY4MDNjZDhhMjMyN2Y3NGYzYTM2MzcyZA==');
+          
+          passwordXhr.onload = function() {
+            console.log('XHR Status (definição de senha):', passwordXhr.status);
+            console.log('XHR Response Text (definição de senha):', passwordXhr.responseText);
+            
+            if (passwordXhr.status >= 200 && passwordXhr.status < 300) {
+              try {
+                var passwordResponse = JSON.parse(passwordXhr.responseText);
+                console.log('Resposta da definição de senha:', passwordResponse);
+                
+                if (passwordResponse.message === "Password changed successfully") {
+                  // Senha definida com sucesso
+                  $scope.$apply(function() {
+                    alert('Cadastro realizado com sucesso! Senha definida. Faça login para continuar.');
+                    window.location.href = 'index.html'; // Redirecionar para a página de login
+                    $scope.cadastrando = false;
+                  });
+                } else {
+                  // Resposta inesperada
+                  $scope.$apply(function() {
+                    alert('Cadastro realizado com sucesso, mas houve um problema ao definir a senha. Faça login para continuar.');
+                    window.location.href = 'index.html';
+                    $scope.cadastrando = false;
+                  });
+                }
+              } catch (e) {
+                console.log('Erro ao processar resposta da definição de senha:', e);
+                $scope.$apply(function() {
+                  alert('Cadastro realizado com sucesso, mas houve um problema ao definir a senha. Faça login para continuar.');
+                  window.location.href = 'index.html';
+                  $scope.cadastrando = false;
+                });
+              }
+            } else {
+              // Erro ao definir senha
+              console.log('Erro ao definir senha:', passwordXhr.status);
+              $scope.$apply(function() {
+                alert('Cadastro realizado com sucesso, mas não foi possível definir a senha. Faça login para continuar.');
+                window.location.href = 'index.html';
+                $scope.cadastrando = false;
+              });
+            }
+          };
+          
+          passwordXhr.onerror = function() {
+            console.log('Erro de rede na requisição de definição de senha');
+            $scope.$apply(function() {
+              alert('Cadastro realizado com sucesso, mas houve um erro de conexão ao definir a senha. Faça login para continuar.');
+              window.location.href = 'index.html';
+              $scope.cadastrando = false;
+            });
+          };
+          
+          passwordXhr.send();
+        }
       } else {
         alert("Você precisa aceitar os termos.");
       }
