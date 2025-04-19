@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR" ng-app="burgerApp">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eisbein Burger | Cadastro</title>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular-animate.js"></script>
+  <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body ng-controller="BurgerController">
+
+  <div class="container" ng-class="{ 'fade': transitioning }">
+
+    <!-- Tela Cadastro -->
+    <section>
+      <div class="logo">
+        <img src="img/logo.png" alt="Eisbein Burger Logo" class="logo-img">
+        <h2>Cadastro</h2>
+      </div>
+      <div class="form-group">
+        <input type="text" placeholder="Nome" ng-model="novoUsuario.nome">
+        <input type="text" placeholder="CPF" ng-model="novoUsuario.cpf">
+        <input type="text" placeholder="Telefone" ng-model="novoUsuario.telefone">
+        <input type="email" placeholder="E-mail" ng-model="novoUsuario.email">
+        <input type="password" placeholder="Senha" ng-model="novoUsuario.senha">
+        <div class="terms-checkbox">
+          <input type="checkbox" ng-model="aceitouTermos" id="termos">
+          <label for="termos">Aceito os termos de uso</label>
+        </div>
+      </div>
+      <button class="btn" ng-click="cadastrar()" ng-disabled="cadastrando">{{ cadastrando ? 'Cadastrando...' : 'Cadastrar' }}</button>
+      <p class="switch-link"><a href="index.html" style="color: inherit; text-decoration: inherit;">Já tem conta? Faça login</a></p>
+    </section>
+
+  </div>
+
+<script>
+  angular.module('burgerApp', ['ngAnimate'])
+  .controller('BurgerController', function($scope, $timeout, $http) {
+
+    $scope.transitioning = false;
+    $scope.novoUsuario = {};
+    $scope.aceitouTermos = false;
+    $scope.cadastrando = false;
+
+    // Função para redirecionar para outras páginas
+    $scope.redirecionar = function(pagina) {
+      if (pagina === 'login') {
+        window.location.href = 'index.html';
+      }
+    };
+
+    $scope.cadastrar = function() {
+      if ($scope.aceitouTermos) {
+        $scope.novoUsuario.moedas = 500;
+        $scope.novoUsuario.pontos = 0;
+        $scope.novoUsuario.nivel = "Iniciante";
+        
+        // Integração com a API Funifier
+        $scope.cadastrando = true; // Desativar botão durante o cadastro
+        
+        console.log('Preparando para enviar dados do usuário para a API Funifier...');
+        console.log('Dados a serem enviados:', {
+          cpf: $scope.novoUsuario.cpf,
+          nome: $scope.novoUsuario.nome,
+          email: $scope.novoUsuario.email
+        });
+        
+        var playerData = {
+          "_id": $scope.novoUsuario.cpf,
+          "name": $scope.novoUsuario.nome,
+          "email": $scope.novoUsuario.email,
+          "password": $scope.novoUsuario.senha, // Adicionando a senha no campo password
+          "image": {
+            "small": {"url": "https://i.pravatar.cc/100"},
+            "medium": {"url": "https://i.pravatar.cc/100"},
+            "original": {"url": "https://i.pravatar.cc/100"}
+          },
+          "teams": ["eisbein-burger"],
+          "extra": {
+            "telefone": $scope.novoUsuario.telefone,
+            "moedas": $scope.novoUsuario.moedas,
+            "pontos": $scope.novoUsuario.pontos,
+            "nivel": $scope.novoUsuario.nivel
+          }
+        };
+        
+        console.log('Enviando requisição para a API Funifier usando XMLHttpRequest');
+        
+        // Usar XMLHttpRequest diretamente para garantir que a chamada seja feita
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://service2.funifier.com/v3/player', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('Authorization', 'Basic NjgwMmYwZjYyMzI3Zjc0ZjNhMzYyN2YzOjY4MDNjZDhhMjMyN2Y3NGYzYTM2MzcyZA==');
+        
+        xhr.onload = function() {
+          console.log('XHR Status:', xhr.status);
+          console.log('XHR Response Text:', xhr.responseText);
+          
+          if (xhr.status >= 200 && xhr.status < 300) {
+            // Sucesso
+            console.log('Cadastro realizado com sucesso!');
+            var responseData = JSON.parse(xhr.responseText);
+            console.log('Dados retornados da API:', responseData);
+            
+            // Atualizar a UI
+            $scope.$apply(function() {
+              alert('Cadastro realizado com sucesso! Faça login para continuar.');
+              window.location.href = 'index.html'; // Redirecionar para a página de login
+              $scope.cadastrando = false;
+            });
+          } else {
+            // Erro
+            console.log('Erro na requisição:', xhr.status);
+            var errorData = {};
+            try {
+              errorData = JSON.parse(xhr.responseText);
+              console.log('Dados do erro:', errorData);
+            } catch (e) {
+              console.log('Não foi possível parsear a resposta de erro');
+            }
+            
+            // Atualizar a UI
+            $scope.$apply(function() {
+              alert('Erro ao registrar na plataforma de gamificação. Tente novamente.');
+              $scope.cadastrando = false;
+            });
+          }
+        };
+        
+        xhr.onerror = function() {
+          console.log('Erro de rede na requisição XHR');
+          
+          // Atualizar a UI
+          $scope.$apply(function() {
+            alert('Erro de conexão. Verifique sua internet e tente novamente.');
+            $scope.cadastrando = false;
+          });
+        };
+        
+        // Converter o objeto para JSON e enviar
+        var jsonData = JSON.stringify(playerData);
+        console.log('Dados JSON a serem enviados:', jsonData);
+        xhr.send(jsonData);
+      } else {
+        alert("Você precisa aceitar os termos.");
+      }
+    };
+
+  });
+</script>
+
+</body>
+</html>

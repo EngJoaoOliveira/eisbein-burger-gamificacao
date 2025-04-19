@@ -26,7 +26,7 @@
         <input type="password" placeholder="Senha" ng-model="login.senha">
       </div>
       <button class="btn" ng-click="entrar()" ng-disabled="logando">{{ logando ? 'Entrando...' : 'Entrar' }}</button>
-      <p class="switch-link"><a href="cadastro.html" style="color: inherit; text-decoration: inherit;">Não tem conta? Cadastre-se</a></p>
+      <p class="switch-link" ng-click="redirecionar('cadastro')">Não tem conta? Cadastre-se</p>
     </section>
 
   </div>
@@ -41,7 +41,7 @@
     // Função para redirecionar para outras páginas
     $scope.redirecionar = function(pagina) {
       if (pagina === 'cadastro') {
-        window.location.href = 'cadastro.html';
+        window.location.href = 'index.html';
       }
     };
 
@@ -61,7 +61,7 @@
         cpf: $scope.login.cpf,
         // Não logamos a senha por segurança
       });
-
+      
       // Dados para autenticação
       var authData = {
         "apiKey" : "6802f0f62327f74f3a3627f3",
@@ -69,32 +69,32 @@
         "username" : $scope.login.cpf,
         "password" : $scope.login.senha
       };
-
+      
       console.log('Enviando requisição de autenticação usando XMLHttpRequest');
-
+      
       // Usar XMLHttpRequest diretamente para garantir que a chamada seja feita
       var xhr = new XMLHttpRequest();
       xhr.open('POST', 'https://service2.funifier.com/v3/auth/token', true);
       xhr.setRequestHeader('Content-Type', 'application/json');
       xhr.setRequestHeader('Authorization', 'Basic NjgwMmYwZjYyMzI3Zjc0ZjNhMzYyN2YzOjY4MDNjZDhhMjMyN2Y3NGYzYTM2MzcyZA==');
-
+      
       xhr.onload = function() {
         console.log('XHR Status (autenticação):', xhr.status);
         console.log('XHR Response Text (autenticação):', xhr.responseText);
-
+        
         if (xhr.status >= 200 && xhr.status < 300) {
           // Autenticação bem-sucedida
           console.log('Autenticação realizada com sucesso!');
-
+          
           try {
             var responseData = JSON.parse(xhr.responseText);
             console.log('Dados de autenticação:', responseData);
-
+            
             // Salvar o token de acesso no localStorage
             localStorage.setItem('access_token', responseData.access_token);
             localStorage.setItem('token_type', responseData.token_type);
             localStorage.setItem('user_id', $scope.login.cpf);
-
+            
             // Buscar dados do jogador
             buscarDadosJogador($scope.login.cpf);
           } catch (e) {
@@ -108,14 +108,14 @@
           // Erro na autenticação
           console.log('Erro na autenticação:', xhr.status);
           var errorData = {};
-
+          
           try {
             errorData = JSON.parse(xhr.responseText);
             console.log('Dados do erro de autenticação:', errorData);
           } catch (e) {
             console.log('Não foi possível parsear a resposta de erro');
           }
-
+          
           $scope.$apply(function() {
             if (xhr.status === 500 && errorData.message === "password incorrect for player") {
               alert('Senha incorreta. Por favor, tente novamente.');
@@ -126,37 +126,37 @@
           });
         }
       };
-
+      
       xhr.onerror = function() {
         console.log('Erro de rede na requisição de autenticação');
-
+        
         $scope.$apply(function() {
           alert('Erro de conexão. Verifique sua internet e tente novamente.');
           $scope.logando = false;
         });
       };
-
+      
       // Função para buscar dados do jogador
       function buscarDadosJogador(cpf) {
         console.log('Buscando dados do jogador:', cpf);
-
+        
         var playerXhr = new XMLHttpRequest();
         playerXhr.open('GET', 'https://service2.funifier.com/v3/player/' + cpf, true);
         playerXhr.setRequestHeader('Authorization', 'Basic NjgwMmYwZjYyMzI3Zjc0ZjNhMzYyN2YzOjY4MDNjZDhhMjMyN2Y3NGYzYTM2MzcyZA==');
-
+        
         playerXhr.onload = function() {
           console.log('XHR Status (dados do jogador):', playerXhr.status);
           console.log('XHR Response Text (dados do jogador):', playerXhr.responseText);
-
+          
           if (playerXhr.status >= 200 && playerXhr.status < 300) {
             // Sucesso ao buscar dados do jogador
             try {
               var playerData = JSON.parse(playerXhr.responseText);
               console.log('Dados do jogador:', playerData);
-
+              
               // Armazenar dados do usuário em localStorage
               localStorage.setItem('usuario', JSON.stringify(playerData));
-
+              
               // Redirecionar para a página de status
               $scope.$apply(function() {
                 window.location.href = 'status.html';
@@ -178,7 +178,7 @@
             });
           }
         };
-
+        
         playerXhr.onerror = function() {
           console.log('Erro de rede ao buscar dados do jogador');
           $scope.$apply(function() {
@@ -186,10 +186,10 @@
             $scope.logando = false;
           });
         };
-
+        
         playerXhr.send();
       }
-
+      
       // Converter o objeto para JSON e enviar
       var jsonData = JSON.stringify(authData);
       console.log('Dados JSON de autenticação a serem enviados:', jsonData);

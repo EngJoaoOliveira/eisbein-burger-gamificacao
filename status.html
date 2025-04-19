@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR" ng-app="burgerApp">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eisbein Burger | Status</title>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular-animate.js"></script>
+  <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body ng-controller="BurgerController">
+
+  <div class="container" ng-class="{ 'fade': transitioning }">
+
+    <!-- Tela Status -->
+    <section>
+      <div class="logo">
+        <img ng-src="{{usuario.image.small.url || 'https://i.pravatar.cc/100'}}" class="avatar">
+        <h3>{{ usuario.name }}</h3>
+        <p>Pontos: {{ usuario.pontos || 0 }}</p>
+        <div class="status-bar">
+          <div class="points-bar" style="width: {{ (usuario.pontos || 0) / 50 }}%;"></div>
+        </div>
+        <p>{{ usuario.nivel || 'Iniciante' }}</p>
+      </div>
+      <div class="menu">
+        <div class="menu-icon" ng-click="redirecionar('desafios')">🏆<br>Desafios</div>
+        <div class="menu-icon" ng-click="redirecionar('ranking')">🥇<br>Ranking</div>
+        <div class="menu-icon" ng-click="redirecionar('recompensas')">🎁<br>Prêmios</div>
+      </div>
+      <button class="btn" ng-click="logout()">Sair</button>
+    </section>
+
+  </div>
+
+<script>
+  angular.module('burgerApp', ['ngAnimate'])
+  .controller('BurgerController', function($scope, $timeout, $http) {
+
+    $scope.transitioning = false;
+    $scope.usuario = {};
+
+    // Verificar se o usuário está autenticado
+    $scope.verificarAutenticacao = function() {
+      var token = localStorage.getItem('access_token');
+      var userId = localStorage.getItem('user_id');
+      
+      if (!token || !userId) {
+        // Se não houver token ou ID do usuário, redirecionar para login
+        window.location.href = 'login.html';
+        return false;
+      }
+      return true;
+    };
+    
+    // Carregar dados do usuário
+    $scope.carregarUsuario = function() {
+      if (!$scope.verificarAutenticacao()) return;
+      
+      var usuarioSalvo = localStorage.getItem('usuario');
+      if (usuarioSalvo) {
+        $scope.usuario = JSON.parse(usuarioSalvo);
+      }
+      
+      // Atualizar dados do jogador da API usando o token
+      var userId = localStorage.getItem('user_id');
+      var token = localStorage.getItem('access_token');
+      
+      var req = {
+        method: 'GET',
+        url: 'https://service2.funifier.com/v3/player/' + userId,
+        headers: {
+          "Authorization": "Basic NjgwMmYwZjYyMzI3Zjc0ZjNhMzYyN2YzOjY4MDNjZDhhMjMyN2Y3NGYzYTM2MzcyZA=="
+        }
+      };
+      
+      $http(req).then(
+        function success(response) {
+          console.log('Dados do jogador atualizados:', response.data);
+          $scope.usuario = response.data;
+          localStorage.setItem('usuario', JSON.stringify(response.data));
+        },
+        function error(response) {
+          console.log('Erro ao atualizar dados do jogador:', response);
+        }
+      );
+    };
+
+    // Inicializar carregando o usuário
+    $scope.carregarUsuario();
+
+    // Função para redirecionar para outras páginas
+    $scope.redirecionar = function(pagina) {
+      if (pagina === 'login') {
+        window.location.href = 'index.html';
+      } else {
+        window.location.href = pagina + '.html';
+      }
+    };
+
+    // Função para fazer logout
+    $scope.logout = function() {
+      // Remover todos os dados de autenticação
+      localStorage.removeItem('usuario');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('token_type');
+      localStorage.removeItem('user_id');
+      
+      window.location.href = 'login.html';
+    };
+
+  });
+</script>
+
+</body>
+</html>
